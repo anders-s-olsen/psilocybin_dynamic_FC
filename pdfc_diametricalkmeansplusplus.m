@@ -35,7 +35,6 @@ for cen = 2:k
     
 end
 
-index
 
 
 end
