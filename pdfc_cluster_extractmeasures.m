@@ -37,7 +37,7 @@ cellcount = 2;
 
 % Initialize survtbl
 survtbl_hdr = [resultscell_hdr(1,1:end-3),'start_state','end_state','start_time','end_time','event'];
-survtbl = table('Size',size(survtbl_hdr),'VariableTypes',...
+survtbl = table('Size',[0,size(survtbl_hdr,2)],'VariableTypes',...
     [{'int16','int16'},repelem({'double'},options.numcovs),{'int16','int16','int16','double','double','int16'}],...
     'VariableNames',survtbl_hdr);
 
@@ -113,9 +113,6 @@ for k = options.min_k:options.max_k
                     % We remove first state in session, since we have no
                     % information on the true length of preceding
                     % activation time
-                    if trans == 1
-                        continue
-                    end
                     
                     % input information into survtbl
                     l = height(survtbl);
@@ -128,14 +125,25 @@ for k = options.min_k:options.max_k
                     end
                     survtbl.N_centroids(l+1) = k;
                     
-                    survtbl.start_time(l+1) = options.TR * f_diff(trans-1);
-                    survtbl.end_time(l+1) = options.TR * f_diff(trans);
-                    survtbl.start_state(l+1) = stateseq(f_diff(trans));
-                    survtbl.end_state(l+1)   = stateseq(f_diff(trans)+1);
-                    survtbl.event(l+1)       = 1; % event = state death
+			if trans == 1
+                        survtbl.start_time(l+1) = 0;
+                        survtbl.end_time(l+1) = options.TR * f_diff(trans);
+                        survtbl.start_state(l+1) = stateseq(f_diff(trans));
+                        survtbl.end_state(l+1)   = stateseq(f_diff(trans)+1);
+                        survtbl.event(l+1)       = 0; % event = left censored
+                    else
+                        
+                        survtbl.start_time(l+1) = options.TR * f_diff(trans-1);
+                        survtbl.end_time(l+1) = options.TR * f_diff(trans);
+                        survtbl.start_state(l+1) = stateseq(f_diff(trans));
+                        survtbl.end_state(l+1)   = stateseq(f_diff(trans)+1);
+                        survtbl.event(l+1)       = 1; % event = state death
+                    end
+
                     
                 end
                 % perform right censoring for the last state in session
+		l = height(survtbl);
                 survtbl.start_time(l+1)  = options.TR * f_diff(end);
                 survtbl.end_time(l+1)  = options.TR * length(stateseq);
                 survtbl.start_state(l+1) = stateseq(f_diff(end)+1);
