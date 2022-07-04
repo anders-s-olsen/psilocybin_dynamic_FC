@@ -29,8 +29,13 @@ for cen = 2:k
     sumsim = sum(maxSim);
     
     sampleProbability = maxSim/sumsim;
-    [C(:,cen), index(cen)] = datasample(stream,X,1,1,'Replace',false,...
-        'Weights',sampleProbability);
+    if ~isempty(stream)
+        [C(:,cen), index(cen)] = datasample(stream,X,1,1,'Replace',false,...
+            'Weights',sampleProbability);
+    else
+        [C(:,cen), index(cen)] = datasample(X,1,1,'Replace',false,...
+            'Weights',sampleProbability);
+    end
     
     
 end
