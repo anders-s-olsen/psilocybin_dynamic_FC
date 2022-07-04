@@ -54,7 +54,7 @@ for cov = 1:options.numcovs
         
         tblperm(isnan(tblperm.cov1),:) = [];
         writetable(tblperm,[options.functionpath,'perm_in.csv']);
-        system(['Rscript ',options.functionpath,'pdfc_permmaxT.R']);
+        system(['cd ',options.functionpath,'; Rscript ',options.functionpath,'pdfc_permmaxT.R']);
         perm_lme_occ = readtable([options.functionpath,'perm_out.csv']);
         
         delete([options.functionpath,'perm_in.csv'])
@@ -112,7 +112,7 @@ for cov = 1:options.numcovs
                 writetable(cell2table(num2cell(options.DTintervals(cov,:))'),[options.functionpath,'DTintervals.csv']);
                 
                 writetable(surv_tbl_cur,[options.functionpath,'dwell_time.csv']);
-                system(['Rscript ',options.functionpath,'pdfc_cox_frailty.R']);
+                system(['cd ',options.functionpath,'; Rscript ',options.functionpath,'pdfc_cox_frailty.R']);
                 dwell_time_stats      = readtable([options.functionpath,'dwell_time_Surv_stats.csv']);
                 dwell_time_curves     = readtable([options.functionpath,'dwell_time_Surv_curves.csv']);
                 
