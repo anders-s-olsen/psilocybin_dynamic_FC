@@ -159,6 +159,8 @@ for k = options.min_k:options.max_k
     end %sub
 end %k
 
-survtbl(1,:) = [];
+if any(options.run_dwell_time)
+    survtbl(1,:) = [];
+end
 % toc
 fprintf('Done with clustering!\n')
