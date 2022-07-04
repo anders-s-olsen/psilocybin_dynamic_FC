@@ -33,6 +33,7 @@ end
 if ~isempty(seed)
     rng(seed)
     stream = RandStream.getGlobalStream();
+    else stream = [];
 end
 
 
