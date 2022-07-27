@@ -22,11 +22,11 @@ minDist = ones(n,1);
 
 for cen = 2:k
     % remove the chosen point
-    X(index(cen-1),:) = []; maxSim(index(cen-1)) = [];
+    X(index(cen-1),:) = []; minDist(index(cen-1)) = [];
     
     minDist = min(mindist,1-(X*C(:,cen-1)).^2);
     
-    sumDist = sum(maxSim);
+    sumDist = sum(minDist);
     
     sampleProbability = minDist/sumDist;
     if ~isempty(stream)
