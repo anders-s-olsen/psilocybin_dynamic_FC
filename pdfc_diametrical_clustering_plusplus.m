@@ -15,7 +15,7 @@ function C = pdfc_diametrical_clustering_plusplus(X,k,stream)
 % prob distribution where a point x is chosen with probability proportional
 % to D(x)
 
-maxSim = -inf(n,1);
+minDist = ones(n,1);
 
 % Select the rest of the seeds by a probabilistic model
 
@@ -24,11 +24,11 @@ for cen = 2:k
     % remove the chosen point
     X(index(cen-1),:) = []; maxSim(index(cen-1)) = [];
     
-    maxSim = max(maxSim,(X*C(:,cen-1)).^2);
+    minDist = min(mindist,1-(X*C(:,cen-1)).^2);
     
-    sumsim = sum(maxSim);
+    sumDist = sum(maxSim);
     
-    sampleProbability = maxSim/sumsim;
+    sampleProbability = minDist/sumDist;
     if ~isempty(stream)
         [C(:,cen), index(cen)] = datasample(stream,X,1,1,'Replace',false,...
             'Weights',sampleProbability);
@@ -36,7 +36,6 @@ for cen = 2:k
         [C(:,cen), index(cen)] = datasample(X,1,1,'Replace',false,...
             'Weights',sampleProbability);
     end
-    
     
 end
 
