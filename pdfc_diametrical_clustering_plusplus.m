@@ -24,7 +24,8 @@ for cen = 2:k
     % remove the chosen point
     X(index(cen-1),:) = []; minDist(index(cen-1)) = [];
     
-    minDist = min(mindist,1-(X*C(:,cen-1)).^2);
+    minDist = min(minDist,1-(X*C(:,cen-1)).^2);
+    minDist(minDist<0)=0;
     
     sumDist = sum(minDist);
     
