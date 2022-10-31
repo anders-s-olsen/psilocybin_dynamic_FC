@@ -1,10 +1,13 @@
 function C = pdfc_diametrical_clustering_plusplus(X,k,stream)
+% C = pdfc_diametrical_clustering_plusplus(X,k,stream)
+% A k-means ++ algorithm for diametrical clustering
+%
+% Anders S Olsen April - November 2021, October 2022
+% Neurobiology Research Unit, Copenhagen University Hospital Rigshospitalet
 
 [n,~] = size(X);
 
 % 1) Choose first centroid at random between the samples
-% next = randi(n);
-% C = X(next,:)';
 
 [C(:,1), index(1)] = datasample(X,1,1);
 
