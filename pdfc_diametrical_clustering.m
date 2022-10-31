@@ -1,5 +1,5 @@
 function [idx_out,C_out,Obj_out] = pdfc_diametrical_clustering(X,K,maxIter,nRepl,init,seed)
-%
+% [idx,C,Obj] = pdfc_diametrical_clustering(X,K,maxIter,nRepl,init,seed)
 % Diametrical clustering as in Sra2012 algorithm 2.
 % Input:
 %%% X - nxp data
@@ -15,7 +15,7 @@ function [idx_out,C_out,Obj_out] = pdfc_diametrical_clustering(X,K,maxIter,nRepl
 % Sra2012: "The multivariate Watson distribution: Maximum-likelihood 
 % estimation and other aspects", Sra S, Karp D, 2012.
 %
-% Anders S Olsen June - November 2021, Neurobiology Research Unit
+% Anders S Olsen June - November 2021, October 2022 Neurobiology Research Unit
 
 
 [n,p] = size(X);
