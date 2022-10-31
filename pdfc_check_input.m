@@ -1,4 +1,10 @@
 function [options] = pdfc_check_input(indata,T,covariates,options)
+% [options] = pdfc_check_input(indata,T,covariates,options)
+% A collection of failsafes and checks for the input data and options
+% structure
+%
+% Anders S Olsen April - November 2021, October 2022
+% Neurobiology Research Unit, Copenhagen University Hospital Rigshospitalet
 
 % Check input into the options structure
 
@@ -31,6 +37,14 @@ if ~isfield(options,'kmeansInit')
     options.kmeansInit = 'plus';
 end
 
+if ~isfield(options,'parallel')
+    options.parallel = false;
+end
+
+if ~isfield(options,'TR')
+    error('Please specify TR in options.TR')
+end
+
 options.P = size(indata,2);
 
 if ~isfield(options,'seed')
@@ -40,6 +54,11 @@ end
 if ~isempty(covariates)
     options.covnames = fieldnames(covariates);
     options.numcovs = length(options.covnames);
+    
+    for c = 1:options.numcovs
+        options.covclass{c} = class(covariates.(options.covnames{c}){1});
+    end
+    
     
     if ~isfield(options,'plot')||(isfield(options,'plot')&&isempty(options.plot))
         options.plot.frac_occ = zeros(1,options.numcovs);
@@ -130,12 +149,20 @@ end
 if ~isfield(options,'kmeansRepl')||isempty(options.kmeansRepl)
     options.kmeansRepl = 5;
 end
+
+if ~isempty(options.seed)&&options.kmeansRepl>1
+    disp('With seed specified, kmeansRepl is set to 1 and parallel turned off')
+    options.parallel = false;
+    options.kmeansRepl = 1;
+end
+
+
 if ~isfield(options,'min_k')||isempty(options.min_k)
     disp('Minimum number of states not set, computing model for min_k=2')
     options.min_k = 2;
 end
 if ~isfield(options,'max_k')||isempty(options.max_k)
-    disp('Maximum number of states not set, computing model for max_k=2')
+    disp('Maximum number of states not set, computing model for max_k=12')
     options.max_k = 12;
 end
 if ~isfield(options,'run_perm_FO')||isempty(options.run_perm_FO)

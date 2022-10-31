@@ -6,12 +6,10 @@
 % 2) Compute leading eigenvector series
 % 3) Run k-means or diametrical clustering and compute metrics fractional 
 % occurrence and/or dwell time
-% 4) Run statistics on fractional occurrence and/or dwell time
+% 4) Run statistics on fractional occurrence and/or dwell time associations
+% with covariates, e.g., plasma psilocin level
 %
-% Scripts for generating visualizations are planned to be added to the
-% github repository github.com/anders-s-olsen/psilocybin_dynamic_FC
-%
-% Anders S Olsen April - November 2021
+% Anders S Olsen April - November 2021, October 2022
 % Neurobiology Research Unit, Copenhagen University Hospital Rigshospitalet
 
 clear,close all
@@ -25,11 +23,12 @@ options.kmeansIterMax = 500;
 options.kmeansRepl = 5;
 options.kmeansInit = 'plus';
 options.min_k = 2;
-options.max_k = 20;
+options.max_k = 2;
+options.TR = 2;
 
 % Clustering type
-options.run_diam = 1;  % Run diametrical clustering (applicable to LEiDA only)
-options.run_kmeans = 0;% Run k-means clustering (applicable to LEiDA only)
+options.run_diam = 1;  % Run diametrical clustering
+options.run_kmeans = 0;% Run k-means clustering
 
 % Flip eigenvectors? Not applicable to diametrical clustering but should be
 % applied when using Euclidean kmeans
@@ -37,15 +36,15 @@ options.flip_eigenvectors = 0;
 
 % Statistics - these are logical vectors where each element is associated
 % with the respective covariate in the "covariates" variable
-options.run_frac_occ = [1,1];
-options.run_dwell_time = [1,1];
-options.run_perm_FO = [0,0];       % Do permutation testing in R (only FO)
+options.run_frac_occ = [true,true];
+options.run_dwell_time = [true,true];
+options.run_perm_FO = [true,true];% Do permutation testing in R (only FO)
 
 % Dwell-time intervals for which to compute marginal survival curves from
 % the Cox frailty PH model - one row for each covariate. Integer only
 options.DTintervals = [0,10,20;0,5,10];
 
-options.seed = 0; %leave empty if no seed
+options.seed = []; %leave empty if no seed
 
 %% Format of inputs
 
@@ -59,7 +58,13 @@ options.seed = 0; %leave empty if no seed
 %%% covariates - struct with each covariate being its own field. Each field
 % should contain a Nx1 cell array of the same format as T with the
 % associated covariate level for each scan session. E.g., 
-% covariate.PPL{1} = [1.93, 2.85] for the first subject.
+% covariates.PPL{1} = [1.93, 2.85] for the first subject.
+
+% example using random data:
+nsubs = 10;
+indata = randn(nsubs*300,90);
+T = repelem({300},nsubs);
+covariates.PPL = {1.93,2.85,0,1.77,0,0.45,0,2.77,0,3.89};
 
 %% Run algorithms
 

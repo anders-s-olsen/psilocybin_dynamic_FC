@@ -1,4 +1,8 @@
 
+# Cox frailty model for dwell time in dynamic functional connectivity models
+#
+# Neurobiology research unit, 2021-2022
+
 dt <- read.csv("dwell_time.csv")
 set.seed(0)
 list.of.packages <- c("survival")

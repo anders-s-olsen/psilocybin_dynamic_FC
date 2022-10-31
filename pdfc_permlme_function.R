@@ -1,3 +1,7 @@
+
+# Implementation of max-T permutation testing
+#
+# Neurobiology research unit, 2021-2022
 permlme_function <- function(lme0.ML, lme1.ML, data = NULL, index.perm = NULL){ 
   
   

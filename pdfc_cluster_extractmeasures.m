@@ -1,4 +1,5 @@
-function [resultscell,survtbl] = pdfc_cluster_extractmeasures(eigenvectors,T,covariates,options)
+function [resultstbl,survtbl,C] = pdfc_cluster_extractmeasures(eigenvectors,T,covariates,options)
+% [resultstbl,survtbl,C] = pdfc_cluster_extractmeasures(eigenvectors,T,covariates,options)
 % Cluster leading eigenvectors according to a range of k-values specified
 % in options.min_k and options.max_k. Cluster centroids, their fractional
 % occurrences and dwell times are collected in the two outputs resultscell
@@ -19,31 +20,34 @@ function [resultscell,survtbl] = pdfc_cluster_extractmeasures(eigenvectors,T,cov
 % centroid, including fractional occurrences and covariate levels
 %%% survtbl - table with information on all state occurrences including the
 % number of active samples in row.
+%%% C - Cell array wit computed centroids
+%
+% Anders S Olsen April - November 2021, October 2022
+% Neurobiology Research Unit, Copenhagen University Hospital Rigshospitalet
 
+% initialize results table
+resultstbl_variablenames = [{'Subject','Session'},options.covnames',...
+    {'N_centroids','Current_centroid','Fractional_occupancy'}];
+resultstbl_variableclass = [{'int16','int16'},options.covclass,...
+    {'int16','int16','double'}];
 
+resultstbl  = table('Size',[0,numel(resultstbl_variablenames)],...
+    'VariableNames', resultstbl_variablenames,...
+    'VariableTypes',resultstbl_variableclass);
 
-% Initialize resultscell
-resultscell_hdr{1,1} = 'Subject';
-resultscell_hdr{1,2} = 'Session';
-for elm = 1:options.numcovs
-    resultscell_hdr{1,2+elm} = options.covnames{elm};
-end
-resultscell_hdr{1,2+options.numcovs+1} = 'N_centroids';
-resultscell_hdr{1,2+options.numcovs+2} = 'Current_centroid';
-resultscell_hdr{1,2+options.numcovs+3} = 'Fractional_occupancy';
-resultscell_hdr{1,2+options.numcovs+4} = 'centroid';
-resultscell = resultscell_hdr; %keep header information
-cellcount = 2;
 
 % Initialize survtbl
-survtbl_hdr = [resultscell_hdr(1,1:end-3),'start_state','end_state','start_time','end_time','event'];
-survtbl = table('Size',[0,size(survtbl_hdr,2)],'VariableTypes',...
-    [{'int16','int16'},repelem({'double'},options.numcovs),{'int16','int16','int16','double','double','int16'}],...
-    'VariableNames',survtbl_hdr);
-
+survtbl_variablenames = [{'Subject','Session'},options.covnames',...
+    {'N_centroids','start_state','end_state','start_time_s','end_time_s','event'}];
+survtbl_variableclass = [{'int16','int16'},options.covclass,...
+    {'int16','int16','int16','double','double','int16'}];
+survtbl = table('Size',[0,numel(survtbl_variablenames)],...
+    'VariableNames', survtbl_variablenames,...
+    'VariableTypes',survtbl_variableclass);
 
 T_concat = [T{:}];
 sessionstartindices = [1,cumsum(T_concat)+1];
+tblcount = 1;
 
 
 for k = options.min_k:options.max_k
@@ -51,15 +55,19 @@ for k = options.min_k:options.max_k
     
     if options.run_diam
         
-        [idx, C] = pdfc_diametrical_clustering(eigenvectors,k,options.kmeansIterMax,options.kmeansRepl,options.kmeansInit,options.seed);
+        [idx, C{k}] = pdfc_diametrical_clustering(eigenvectors,k,options.kmeansIterMax,options.kmeansRepl,options.kmeansInit,options.seed,options.parallel);
         
     elseif options.run_kmeans
         
-        [idx, C] = kmeans(eigenvectors,k,'MaxIter',options.kmeansIterMax,'Replicates',options.kmeansRepl,'Start',options.kmeansInit);
+        [idx, C{k}] = kmeans(eigenvectors,k,'MaxIter',options.kmeansIterMax,'Replicates',options.kmeansRepl,'Start',options.kmeansInit);
         
     end
     
+    if any([options.run_frac_occ,options.run_dwell_time])
     disp('Computing summary measures')
+    else
+        continue
+    end
     
     sescounter = 1;
     
@@ -68,37 +76,29 @@ for k = options.min_k:options.max_k
         
         for ses = 1:length(T{sub})     % loop through sessions
             
-            idx_ses = sessionstartindices(sescounter):sessionstartindices(sescounter+1)-1;
-            
             % extract state sequence for this subject and session
-            stateseq = idx(idx_ses);
+            stateseq = idx(sessionstartindices(sescounter):sessionstartindices(sescounter+1)-1);
             
             % Loop through cluster centroids to compute fractional occ
             if any(options.run_frac_occ)
-                for centroid = 1:k
-                    
-                    % Fill in output cell for this centroid
-                    resultscell{cellcount,strcmp(resultscell_hdr,'Subject')}          = num2str(sub);
-                    resultscell{cellcount,strcmp(resultscell_hdr,'Session')}          = num2str(ses);
-                    for elm = 1:options.numcovs
-                        if ~isempty(covariates.(options.covnames{elm}){sub})
-                            resultscell{cellcount,strcmp(resultscell_hdr,options.covnames{elm})} = covariates.(options.covnames{elm}){sub}(ses);
-                        end
+                
+                h = height(resultstbl)+1; %start row
+                resultstbl.Subject(h:h+k-1) = sub;
+                resultstbl.Session(h:h+k-1) = ses;
+                resultstbl.N_centroids(h:h+k-1) = k;
+                for elm = 1:options.numcovs
+                    if ~isempty(covariates.(options.covnames{elm}){sub})
+                        resultstbl.(options.covnames{elm})(h:h+k-1) = covariates.(options.covnames{elm}){sub}(ses);
                     end
-                    resultscell{cellcount,strcmp(resultscell_hdr,'N_centroids')}      = num2str(k);
-                    resultscell{cellcount,strcmp(resultscell_hdr,'Current_centroid')} = num2str(centroid);
-                    
+                end
+                
+                for centroid = 1:k
                     % compute fractional occupancy
                     frac_occ = sum(stateseq==centroid)/numel(stateseq);
-                    resultscell{cellcount,strcmp(resultscell_hdr,'Fractional_occupancy')} = frac_occ;
                     
-                    
-                    % only once for every ncentroids, we input cluster
-                    % centroids in our results cell
-                    if sub==1&&ses==1
-                        resultscell{cellcount,strcmp(resultscell_hdr,'centroid')} = C(centroid,:);
-                    end
-                    cellcount = cellcount + 1;
+                    % Fill in output cell for this centroid
+                    resultstbl.Current_centroid(h+centroid-1) = centroid;
+                    resultstbl.Fractional_occupancy(h+centroid-1) = frac_occ;
                     
                 end
             end
@@ -108,49 +108,31 @@ for k = options.min_k:options.max_k
                 % indices and collect information in separate rows of
                 % survtbl, including covariate levels.
                 
+                h = height(survtbl)+1; %start row
                 f_diff = find(diff(stateseq)~=0);
-                for trans = 1:numel(f_diff)
-                    % We remove first state in session, since we have no
-                    % information on the true length of preceding
-                    % activation time
-                    
-                    % input information into survtbl
-                    l = height(survtbl);
-                    survtbl.Subject(l+1)  = sub;
-                    survtbl.Session(l+1)  = ses;
-                    for elm = 1:options.numcovs
-                        if ~isempty(covariates.(options.covnames{elm}){sub})
-                            survtbl.(options.covnames{elm})(l+1) = covariates.(options.covnames{elm}){sub}(ses);
-                        end
-                    end
-                    survtbl.N_centroids(l+1) = k;
-                    
-			if trans == 1
-                        survtbl.start_time(l+1) = 0;
-                        survtbl.end_time(l+1) = options.TR * f_diff(trans);
-                        survtbl.start_state(l+1) = stateseq(f_diff(trans));
-                        survtbl.end_state(l+1)   = stateseq(f_diff(trans)+1);
-                        survtbl.event(l+1)       = 0; % event = left censored
-                    else
-                        
-                        survtbl.start_time(l+1) = options.TR * f_diff(trans-1);
-                        survtbl.end_time(l+1) = options.TR * f_diff(trans);
-                        survtbl.start_state(l+1) = stateseq(f_diff(trans));
-                        survtbl.end_state(l+1)   = stateseq(f_diff(trans)+1);
-                        survtbl.event(l+1)       = 1; % event = state death
-                    end
-
-                    
-                end
+                % We remove first state in session, since we have no
+                % information on the true length of preceding
+                % activation time
                 % perform right censoring for the last state in session
-		l = height(survtbl);
-                survtbl.start_time(l+1)  = options.TR * f_diff(end);
-                survtbl.end_time(l+1)  = options.TR * length(stateseq);
-                survtbl.start_state(l+1) = stateseq(f_diff(end)+1);
-                survtbl.end_state(l+1)   = NaN;
-                survtbl.event(l+1)       = 0; % event = right censored
+
+                survtbl.start_time_s(h:h+numel(f_diff)) = options.TR * [0;f_diff];
+                survtbl.end_time_s(h:h+numel(f_diff))   = options.TR * [f_diff;length(stateseq)];
+                survtbl.start_state(h:h+numel(f_diff))  = [stateseq(f_diff);stateseq(f_diff(end)+1)];
+                survtbl.end_state(h:h+numel(f_diff))    = [stateseq(f_diff+1);0];
+                survtbl.event(h:h+numel(f_diff))        = [0;ones(numel(f_diff)-1,1);0];
                 
-            end 
+                % input standard information into survtbl
+                survtbl.Subject(h:h+numel(f_diff))  = sub;
+                survtbl.Session(h:h+numel(f_diff))  = ses;
+                survtbl.N_centroids(h:h+numel(f_diff)) = k;
+                for elm = 1:options.numcovs
+                    if ~isempty(covariates.(options.covnames{elm}){sub})
+                        survtbl.(options.covnames{elm})(h:h+numel(f_diff)) = covariates.(options.covnames{elm}){sub}(ses);
+                    end
+                end
+                
+                
+            end
             
             sescounter = sescounter +1;
         end %ses
@@ -158,9 +140,5 @@ for k = options.min_k:options.max_k
         
     end %sub
 end %k
-
-if any(options.run_dwell_time)
-    survtbl(1,:) = [];
-end
 % toc
 fprintf('Done with clustering!\n')

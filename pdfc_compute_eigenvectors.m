@@ -1,4 +1,6 @@
 function outdata = pdfc_compute_eigenvectors(indata,T,options)
+% outdata = pdfc_compute_eigenvectors(indata,T,options)
+% 
 % Compute leading eigenvector series from indata. This includes computing
 % regional Hilbert phase series for every scan session and subsequently
 % establish the phase coherence map and its leading eigenvector for every
@@ -14,10 +16,16 @@ function outdata = pdfc_compute_eigenvectors(indata,T,options)
 % eigenvectors, to ensure the majority of their elements is negative
 % Output:
 % outdata - data matrix of the same size as indata.
+%
+% Anders S Olsen April - November 2021, October 2022
+% Neurobiology Research Unit, Copenhagen University Hospital Rigshospitalet
 
 T_concat = [T{:}];
 sessionstartindices = [1,cumsum(T_concat)+1];
-outdata = [];
+outdata = nan(size(indata));
+
+pb = CmdLineProgressBar('Computing leading eigenvectors for session ');
+
 
 for ses = 1:length(T_concat)
     
@@ -26,18 +34,13 @@ for ses = 1:length(T_concat)
     
     HilbertMatrix = angle(hilbert(indatases)); % Compute BOLD phases
     
-    disp(['Computing leading eigenvectors for session ',num2str(ses)])
-    cohmat = nan(options.P); % coherence matrix
-    outdata_tmp = nan(T_concat(ses),options.P); % output leading eigenvectors
+%     disp(['Computing leading eigenvectors for session ',num2str(ses)])
+    pb.print(ses,length(T_concat))
     
     for tt = 1:T_concat(ses) %num timepoints in session
         
         % Fill in coherence matrix
-        for row = 1:options.P
-            for col = 1:options.P
-                cohmat(row, col) = cos(HilbertMatrix(tt,row)-HilbertMatrix(tt,col));
-            end
-        end
+        cohmat = cos(HilbertMatrix(tt,:)'-HilbertMatrix(tt,:));
         
         % Get the leading eigenvector
         [V1,~]=eigs(cohmat,1);
@@ -50,11 +53,9 @@ for ses = 1:length(T_concat)
             end
         end
         
-        outdata_tmp(tt,:) = V1;
+        outdata(idx_ses(tt),:) = V1;
         
     end
-    
-    outdata = [outdata;outdata_tmp];
     
 end
 disp('Done computing leading eigenvectors')

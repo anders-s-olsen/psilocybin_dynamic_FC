@@ -1,3 +1,7 @@
+# Main script for permutation max-t testing
+#
+# Neurobiology research unit, 2021-2022
+
 list.of.packages <- c("nlme","parallel","tictoc")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -57,8 +61,8 @@ for (k in unique(dt$N_centroids)){
     n.obs = nrow(dtkc)
     
     # Compute initial model
-    e.lmeH0[[state]] <- nlme::lme(Frac_occ ~ 1, random =~1|Subject, data = dtkc,method="ML")
-    e.lmeH1[[state]] <- nlme::lme(Frac_occ ~ 1 + cov1, random=~1|Subject, data = dtkc,method="ML")
+    e.lmeH0[[state]] <- nlme::lme(Fractional_occupancy ~ 1, random =~1|Subject, data = dtkc,method="ML")
+    e.lmeH1[[state]] <- nlme::lme(Fractional_occupancy ~ 1 + cov1, random=~1|Subject, data = dtkc,method="ML")
     
     LRT_init[[state]] <- as.double(2*(logLik(e.lmeH1[[state]])-logLik(e.lmeH0[[state]])))
     pval_init[[state]] = pchisq(LRT_init[[state]],df=1,lower.tail = FALSE)
