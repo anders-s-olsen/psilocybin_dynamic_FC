@@ -2,8 +2,8 @@
 
 This repository contains a set of matlab and R functions to uncover connectivity structures in data using [Leading Eigenvector Dynamics Analysis](https://sites.google.com/site/cvjoanacabral/codes/leida-leading-eigenvector-dynamics-analysis) and diametrical clustering. These functions were used to generate the results in:
 
->[Psilocybin modulation of dynamic functional connectivity is associated with plasma psilocin and subjective effects ](https://nodesource.com/products/nsolid) 
-Anders S. Olsen, Anders Lykkebo-Valløe, Brice Ozenne, Martin K. Madsen, Dea S. Stenbæk, Sophia Armand, Morten Mørup, Melanie Ganz, Gitte M. Knudsen, Patrick M. Fisher.
+>[Psilocybin modulation of dynamic functional connectivity is associated with plasma psilocin and subjective effects ](doi.org/10.1016/j.neuroimage.2022.119716) 
+Anders S. Olsen, Anders Lykkebo-Valløe, Brice Ozenne, Martin K. Madsen, Dea S. Stenbæk, Sophia Armand, Morten Mørup, Melanie Ganz, Gitte M. Knudsen, Patrick M. Fisher. Neuroimage (2022)
 
 ### Format of inputs
 *indata* - all data (post preprocessing) concatenated into one nxp double array, where p is the number of regions (data dimensionality).
