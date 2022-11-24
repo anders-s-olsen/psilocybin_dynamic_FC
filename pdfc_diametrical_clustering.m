@@ -1,4 +1,4 @@
-function [idx_out,C_out,Obj_out] = pdfc_diametrical_clustering(X,K,maxIter,nRepl,init,seed)
+function [idx_out,C_out,Obj_out] = pdfc_diametrical_clustering(X,K,maxIter,nRepl,init,seed,parallel)
 % [idx,C,Obj] = pdfc_diametrical_clustering(X,K,maxIter,nRepl,init,seed)
 % Diametrical clustering as in Sra2012 algorithm 2.
 % Input:
@@ -15,7 +15,7 @@ function [idx_out,C_out,Obj_out] = pdfc_diametrical_clustering(X,K,maxIter,nRepl
 % Sra2012: "The multivariate Watson distribution: Maximum-likelihood 
 % estimation and other aspects", Sra S, Karp D, 2012.
 %
-% Anders S Olsen June - November 2021, October 2022 Neurobiology Research Unit
+% Anders S Olsen June - November 2021, Neurobiology Research Unit
 
 
 [n,p] = size(X);
@@ -23,17 +23,40 @@ if nargin == 2
     maxIter = 1000;
     nRepl = 5;
     init = 'plus';
+    seed = [];
+    parallel = false;
 elseif nargin == 3
     nRepl = 5;
     init = 'plus';
+    seed = [];
+    parallel = false;
 elseif nargin == 4
     init = 'plus';
+    seed = [];
+    parallel = false;
+elseif nargin == 5
+    seed = [];
+    parallel = false;
+elseif nargin == 6
+    parallel = false;
 end
 
 if ~isempty(seed)
-    rng(seed)
+    s = RandStream('mt19937ar','Seed',seed);
+    RandStream.setGlobalStream(s);
     stream = RandStream.getGlobalStream();
-    else stream = [];
+else
+    stream = [];
+end
+
+if size(X,1)<size(X,2)
+    error('Wrong input data format, should be NxP')
+end
+
+if parallel
+    numWorkers = min([12,nRepl]);
+else
+    numWorkers = 0;
 end
 
 
@@ -45,8 +68,9 @@ X_part_final = zeros(n,nRepl);
 
 %% perform clustering
 
-for repl = 1:nRepl
-    clearvars objective partsum
+parfor (repl = 1:nRepl,numWorkers)
+    objective = zeros(maxIter,1);
+    partsum = zeros(maxIter,K);
     
     % Initilize clusters
     if strcmp(init,'uniform')
