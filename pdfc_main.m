@@ -72,7 +72,7 @@ options = pdfc_check_input(indata,T,covariates,options);
 
 eigenvectors = pdfc_compute_eigenvectors(indata,T,options);
 
-[resultstbl,survtbl] = pdfc_cluster_extractmeasures(eigenvectors,T,covariates,options);
+[resultstbl,survtbl,C] = pdfc_cluster_extractmeasures(eigenvectors,T,covariates,options);
 
 p_cell = pdfc_analyzeclusteringdata(resultstbl,survtbl,options);
 
