@@ -69,8 +69,8 @@ function [idx_out,C_out,sumd_out,Obj_out] = pdfc_diametrical_clustering(X,K,maxI
     
     %% perform clustering
     
-    parfor (repl = 1:nRepl,numWorkers)
-    % for repl = 1:nRepl
+    % parfor (repl = 1:nRepl,numWorkers)
+    for repl = 1:nRepl
         objective = zeros(maxIter,1);
         partsum = zeros(maxIter,K);
         
@@ -126,6 +126,6 @@ function [idx_out,C_out,sumd_out,Obj_out] = pdfc_diametrical_clustering(X,K,maxI
     Obj_out = objective_final(:,idx_obj);
     C_out = C_final(:,:,idx_obj)';
     idx_out = X_part_final(:,idx_obj);
-    sumd_out = sumd_final;
+    sumd_out = sumd_final(:,idx_obj);
     
     end
